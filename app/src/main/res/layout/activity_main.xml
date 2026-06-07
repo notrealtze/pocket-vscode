@@ -7,7 +7,8 @@
     <WebView
         android:id="@+id/webview"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <TextView
         android:id="@+id/loadingText"
@@ -17,5 +18,43 @@
         android:text="Starting VSCode..."
         android:textColor="#cccccc"
         android:textSize="18sp" />
+
+    <LinearLayout
+        android:id="@+id/zoomControls"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="8dp"
+        android:orientation="horizontal"
+        android:background="#55666666"
+        android:padding="4dp">
+
+        <Button
+            android:id="@+id/btnZoomOut"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="-"
+            android:textSize="18sp"
+            android:textColor="#ffffff"
+            android:backgroundTint="#888888"
+            android:padding="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp" />
+
+        <Button
+            android:id="@+id/btnZoomIn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="+"
+            android:textSize="18sp"
+            android:textColor="#ffffff"
+            android:backgroundTint="#888888"
+            android:padding="0dp"
+            android:minWidth="0dp"
+            android:minHeight="0dp"
+            android:layout_marginStart="4dp" />
+
+    </LinearLayout>
 
 </RelativeLayout>
