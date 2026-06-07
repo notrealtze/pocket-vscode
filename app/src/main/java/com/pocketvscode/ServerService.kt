@@ -27,13 +27,17 @@ class ServerService : Service() {
         Thread {
             try {
                 val filesDir = filesDir.absolutePath
-                val node = "$filesDir/node"
                 val codeServerEntry = "$filesDir/code-server/out/node/entry.js"
                 val userDataDir = "$filesDir/vscode-data"
                 val extensionsDir = "$filesDir/vscode-extensions"
 
                 File(userDataDir).mkdirs()
                 File(extensionsDir).mkdirs()
+
+                // Node is installed as a native lib - Android allows executing from lib dir
+                val node = "${applicationInfo.nativeLibraryDir}/libnode.so"
+                Log.d(TAG, "Using node: $node")
+                Log.d(TAG, "Exists: ${File(node).exists()}")
 
                 val pb = ProcessBuilder(
                     node,
@@ -46,25 +50,27 @@ class ServerService : Service() {
                 )
                 pb.environment()["HOME"] = filesDir
                 pb.environment()["TMPDIR"] = cacheDir.absolutePath
+                pb.environment()["NODE_SKIP_PLATFORM_CHECK"] = "1"
                 pb.redirectErrorStream(true)
 
                 process = pb.start()
                 Log.d(TAG, "code-server started")
 
                 process!!.inputStream.bufferedReader().forEachLine {
-                    Log.d(TAG, it)
+                    Log.d(TAG, "CS: $it")
                 }
+
+                val exit = process!!.waitFor()
+                Log.e(TAG, "code-server exited: $exit")
+
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to start code-server", e)
+                Log.e(TAG, "Failed: ${e.message}", e)
             }
         }.start()
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            CHANNEL_ID, "VSCode Server",
-            NotificationManager.IMPORTANCE_LOW
-        )
+        val channel = NotificationChannel(CHANNEL_ID, "VSCode Server", NotificationManager.IMPORTANCE_LOW)
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
     }
 

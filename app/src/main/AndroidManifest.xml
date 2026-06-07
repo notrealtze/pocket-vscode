@@ -10,7 +10,8 @@
         android:allowBackup="true"
         android:label="PocketVSCode"
         android:theme="@style/Theme.PocketVSCode"
-        android:hardwareAccelerated="true">
+        android:hardwareAccelerated="true"
+        android:extractNativeLibs="true">
 
         <activity
             android:name=".MainActivity"

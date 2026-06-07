@@ -19,6 +19,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Bundle Node as native lib
+        run: |
+          mkdir -p app/src/main/jniLibs/arm64-v8a
+          wget https://nodejs.org/dist/v20.19.0/node-v20.19.0-linux-arm64.tar.gz
+          tar -xzf node-v20.19.0-linux-arm64.tar.gz
+          cp node-v20.19.0-linux-arm64/bin/node app/src/main/jniLibs/arm64-v8a/libnode.so
+
       - name: Make gradlew executable
         run: chmod +x gradlew
 
