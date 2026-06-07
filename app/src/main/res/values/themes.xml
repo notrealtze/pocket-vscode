@@ -4,6 +4,7 @@
         <item name="android:windowBackground">#1e1e1e</item>
         <item name="android:statusBarColor">#1e1e1e</item>
         <item name="android:navigationBarColor">#1e1e1e</item>
-        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 </resources>
