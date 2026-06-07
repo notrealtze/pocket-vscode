@@ -1,6 +1,7 @@
 package com.pocketvscode
 
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.webkit.WebSettings
@@ -16,7 +17,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var loadingText: TextView
     private val PORT = 8080
-    private val MAX_RETRIES = 40
+    private val MAX_RETRIES = 60
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,20 +27,32 @@ class MainActivity : AppCompatActivity() {
         loadingText = findViewById(R.id.loadingText)
 
         setupWebView()
+        launchTermuxCodeServer()
 
         Thread {
-            val extracted = BinaryExtractor.extract(this) { msg ->
-                runOnUiThread { loadingText.text = msg }
-            }
-            if (extracted) {
-                startService(Intent(this, ServerService::class.java))
-                waitForServer()
-            } else {
-                runOnUiThread {
-                    loadingText.text = "Failed to extract binaries"
-                }
-            }
+            waitForServer()
         }.start()
+    }
+
+    private fun launchTermuxCodeServer() {
+        // Tell Termux to run code-server via Termux:API intent
+        val intent = Intent("com.termux.RUN_COMMAND")
+        intent.setClassName("com.termux", "com.termux.app.RunCommandService")
+        intent.putExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/node")
+        intent.putExtra("com.termux.RUN_COMMAND_ARGUMENTS", arrayOf(
+            "/data/data/com.termux/files/home/code-server/out/node/entry.js",
+            "--bind-addr", "0.0.0.0:8080",
+            "--auth", "none",
+            "--disable-telemetry"
+        ))
+        intent.putExtra("com.termux.RUN_COMMAND_WORKDIR", "/data/data/com.termux/files/home")
+        intent.putExtra("com.termux.RUN_COMMAND_BACKGROUND", true)
+        try {
+            startService(intent)
+            runOnUiThread { loadingText.text = "Starting VSCode via Termux..." }
+        } catch (e: Exception) {
+            runOnUiThread { loadingText.text = "Waiting for VSCode..." }
+        }
     }
 
     private fun setupWebView() {
@@ -72,12 +85,12 @@ class MainActivity : AppCompatActivity() {
             } catch (e: Exception) { }
             retries++
             runOnUiThread {
-                loadingText.text = "Starting VSCode... ($retries/$MAX_RETRIES)"
+                loadingText.text = "Waiting for VSCode... ($retries/$MAX_RETRIES)"
             }
             Thread.sleep(2000)
         }
         runOnUiThread {
-            loadingText.text = "Server failed to start"
+            loadingText.text = "Could not connect. Open Termux and run:\nnode ~/code-server/out/node/entry.js --bind-addr 0.0.0.0:8080 --auth none"
         }
     }
 
