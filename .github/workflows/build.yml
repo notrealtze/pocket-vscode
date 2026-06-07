@@ -32,8 +32,11 @@ jobs:
       - name: Download code-server ARM64
         run: |
           wget https://github.com/coder/code-server/releases/download/v4.95.3/code-server-4.95.3-linux-arm64.tar.gz
-          tar -xzf code-server-4.95.3-linux-arm64.tar.gz --warning=no-same-hardlinks || true
-          mv code-server-4.95.3-linux-arm64 code-server
+          tar -xzf code-server-4.95.3-linux-arm64.tar.gz 2>/dev/null || true
+          ls -la
+          CSDIR=$(find . -maxdepth 1 -type d -name "code-server*" | head -1)
+          echo "Found: $CSDIR"
+          mv "$CSDIR" code-server
           tar -czf app/src/main/assets/code-server.tar.gz code-server
 
       - name: Make gradlew executable
