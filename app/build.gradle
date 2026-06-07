@@ -16,9 +16,7 @@ android {
     }
 
     buildTypes {
-        release {
-            minifyEnabled false
-        }
+        release { minifyEnabled false }
     }
 
     compileOptions {
@@ -26,18 +24,15 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
+    kotlinOptions { jvmTarget = '17' }
 
-    aaptOptions {
-        noCompress 'gz', 'tar', 'so', 'node'
-    }
+    aaptOptions { noCompress 'gz', 'tar', 'so', 'node' }
 }
 
 dependencies {
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.webkit:webkit:1.10.0'
+    implementation 'androidx.documentfile:documentfile:1.0.1'
     implementation 'org.apache.commons:commons-compress:1.26.1'
 }
