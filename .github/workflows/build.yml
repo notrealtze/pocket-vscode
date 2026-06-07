@@ -1,0 +1,46 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Download Node.js ARM64
+        run: |
+          wget https://nodejs.org/dist/v20.19.0/node-v20.19.0-linux-arm64.tar.gz
+          tar -xzf node-v20.19.0-linux-arm64.tar.gz
+          cp node-v20.19.0-linux-arm64/bin/node app/src/main/assets/node
+          chmod +x app/src/main/assets/node
+
+      - name: Download code-server ARM64
+        run: |
+          wget https://github.com/coder/code-server/releases/download/v4.95.3/code-server-4.95.3-linux-arm64.tar.gz
+          tar -xzf code-server-4.95.3-linux-arm64.tar.gz --warning=no-same-hardlinks || true
+          mv code-server-4.95.3-linux-arm64 code-server
+          tar -czf app/src/main/assets/code-server.tar.gz code-server
+
+      - name: Make gradlew executable
+        run: chmod +x gradlew
+
+      - name: Build APK
+        run: ./gradlew assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PocketVSCode
+          path: app/build/outputs/apk/debug/app-debug.apk
