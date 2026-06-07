@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
             attempt++
             runOnUiThread { loadingText.text = "Starting VSCode... ($attempt/120)" }
             try {
-                val conn = URL("http://127.0.0.1:8080").openConnection() as HttpURLConnection
+                val conn = URL("http://localhost:8080").openConnection() as HttpURLConnection
                 conn.connectTimeout = 1000
                 conn.readTimeout = 1000
                 conn.connect()
@@ -48,7 +48,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         loadingText.visibility = android.view.View.GONE
                         webView.visibility = android.view.View.VISIBLE
-                        webView.loadUrl("http://127.0.0.1:8080")
+                        webView.loadUrl("http://localhost:8080")
                     }
                     return
                 }
