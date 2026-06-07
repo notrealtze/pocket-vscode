@@ -16,7 +16,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private lateinit var loadingText: TextView
     private val PORT = 8080
-    private val MAX_RETRIES = 30
+    private val MAX_RETRIES = 40
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -28,7 +28,9 @@ class MainActivity : AppCompatActivity() {
         setupWebView()
 
         Thread {
-            val extracted = BinaryExtractor.extract(this)
+            val extracted = BinaryExtractor.extract(this) { msg ->
+                runOnUiThread { loadingText.text = msg }
+            }
             if (extracted) {
                 startService(Intent(this, ServerService::class.java))
                 waitForServer()
@@ -67,9 +69,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread { loadVSCode() }
                     return
                 }
-            } catch (e: Exception) {
-                // not ready yet
-            }
+            } catch (e: Exception) { }
             retries++
             runOnUiThread {
                 loadingText.text = "Starting VSCode... ($retries/$MAX_RETRIES)"
@@ -77,7 +77,7 @@ class MainActivity : AppCompatActivity() {
             Thread.sleep(2000)
         }
         runOnUiThread {
-            loadingText.text = "Server failed to start. Check logs."
+            loadingText.text = "Server failed to start"
         }
     }
 

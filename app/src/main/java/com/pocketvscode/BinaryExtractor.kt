@@ -6,13 +6,16 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import java.io.File
 import java.io.FileOutputStream
+import java.net.URL
 
 object BinaryExtractor {
 
     private const val TAG = "BinaryExtractor"
-    private const val EXTRACTED_FLAG = "extracted_v2"
+    private const val EXTRACTED_FLAG = "extracted_v3"
+    private const val NODE_URL = "https://nodejs.org/dist/v20.19.0/node-v20.19.0-linux-arm64.tar.gz"
+    private const val CS_URL = "https://github.com/coder/code-server/releases/download/v4.95.3/code-server-4.95.3-linux-arm64.tar.gz"
 
-    fun extract(context: Context): Boolean {
+    fun extract(context: Context, onProgress: (String) -> Unit): Boolean {
         val filesDir = context.filesDir
         val flagFile = File(filesDir, EXTRACTED_FLAG)
 
@@ -22,61 +25,80 @@ object BinaryExtractor {
         }
 
         return try {
+            onProgress("Downloading Node.js...")
+            Log.d(TAG, "Downloading node...")
+            val nodeTar = File(filesDir, "node.tar.gz")
+            downloadFile(NODE_URL, nodeTar)
+
+            onProgress("Extracting Node.js...")
             Log.d(TAG, "Extracting node binary...")
-            extractAssetToFile(context, "node", File(filesDir, "node"))
-            File(filesDir, "node").setExecutable(true, false)
+            extractNodeBinary(nodeTar, filesDir)
+            nodeTar.delete()
 
-            Log.d(TAG, "Extracting code-server.tar.gz...")
-            extractTarGz(context, "code-server.tar.gz", filesDir)
+            onProgress("Downloading code-server (150MB)...")
+            Log.d(TAG, "Downloading code-server...")
+            val csTar = File(filesDir, "cs.tar.gz")
+            downloadFile(CS_URL, csTar)
 
-            setExecutableRecursive(File(filesDir, "code-server/bin"))
-            File(filesDir, "code-server/bin/code-server").setExecutable(true, false)
+            onProgress("Extracting code-server...")
+            Log.d(TAG, "Extracting code-server...")
+            extractTarGz(csTar, filesDir, "code-server")
+            csTar.delete()
+
+            setExecutableRecursive(filesDir)
 
             flagFile.createNewFile()
-            Log.d(TAG, "Extraction complete")
+            Log.d(TAG, "Done")
             true
         } catch (e: Exception) {
-            Log.e(TAG, "Extraction failed: ${e.message}", e)
+            Log.e(TAG, "Failed: ${e.message}", e)
             false
         }
     }
 
-    private fun extractAssetToFile(context: Context, assetName: String, outFile: File) {
-        context.assets.open(assetName).use { input ->
-            FileOutputStream(outFile).use { output ->
+    private fun downloadFile(url: String, dest: File) {
+        URL(url).openStream().use { input ->
+            FileOutputStream(dest).use { output ->
                 input.copyTo(output)
             }
         }
     }
 
-    private fun extractTarGz(context: Context, assetName: String, destDir: File) {
-        context.assets.open(assetName).use { assetStream ->
-            GzipCompressorInputStream(assetStream).use { gzipStream ->
-                TarArchiveInputStream(gzipStream).use { tarStream ->
-                    var entry = tarStream.nextEntry
-                    while (entry != null) {
-                        val outFile = File(destDir, entry.name)
-                        if (entry.isDirectory) {
-                            outFile.mkdirs()
-                        } else {
-                            outFile.parentFile?.mkdirs()
-                            FileOutputStream(outFile).use { out ->
-                                tarStream.copyTo(out)
-                            }
-                            if (entry.mode and 0b001001001 != 0) {
-                                outFile.setExecutable(true, false)
-                            }
-                        }
-                        entry = tarStream.nextEntry
-                    }
+    private fun extractNodeBinary(tarGz: File, destDir: File) {
+        TarArchiveInputStream(GzipCompressorInputStream(tarGz.inputStream())).use { tar ->
+            var entry = tar.nextEntry
+            while (entry != null) {
+                if (entry.name.endsWith("/bin/node") && !entry.isDirectory) {
+                    val out = File(destDir, "node")
+                    FileOutputStream(out).use { tar.copyTo(it) }
+                    out.setExecutable(true, false)
+                    return
                 }
+                entry = tar.nextEntry
+            }
+        }
+    }
+
+    private fun extractTarGz(tarGz: File, destDir: File, topFolder: String) {
+        TarArchiveInputStream(GzipCompressorInputStream(tarGz.inputStream())).use { tar ->
+            var entry = tar.nextEntry
+            while (entry != null) {
+                val name = entry.name.replaceFirst(Regex("^[^/]+"), topFolder)
+                val outFile = File(destDir, name)
+                if (entry.isDirectory) {
+                    outFile.mkdirs()
+                } else {
+                    outFile.parentFile?.mkdirs()
+                    FileOutputStream(outFile).use { tar.copyTo(it) }
+                    if (entry.mode and 0b001001001 != 0) outFile.setExecutable(true, false)
+                }
+                entry = tar.nextEntry
             }
         }
     }
 
     private fun setExecutableRecursive(dir: File) {
-        dir.listFiles()?.forEach {
-            it.setExecutable(true, false)
-        }
+        File(dir, "code-server/bin").listFiles()?.forEach { it.setExecutable(true, false) }
+        File(dir, "node").setExecutable(true, false)
     }
 }

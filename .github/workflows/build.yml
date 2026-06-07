@@ -19,26 +19,6 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Create assets directory
-        run: mkdir -p app/src/main/assets
-
-      - name: Download Node.js ARM64
-        run: |
-          wget https://nodejs.org/dist/v20.19.0/node-v20.19.0-linux-arm64.tar.gz
-          tar -xzf node-v20.19.0-linux-arm64.tar.gz
-          cp node-v20.19.0-linux-arm64/bin/node app/src/main/assets/node
-          chmod +x app/src/main/assets/node
-
-      - name: Download code-server ARM64
-        run: |
-          wget https://github.com/coder/code-server/releases/download/v4.95.3/code-server-4.95.3-linux-arm64.tar.gz
-          tar -xzf code-server-4.95.3-linux-arm64.tar.gz 2>/dev/null || true
-          ls -la
-          CSDIR=$(find . -maxdepth 1 -type d -name "code-server*" | head -1)
-          echo "Found: $CSDIR"
-          mv "$CSDIR" code-server
-          tar -czf app/src/main/assets/code-server.tar.gz code-server
-
       - name: Make gradlew executable
         run: chmod +x gradlew
 
